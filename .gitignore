@@ -1,0 +1,14 @@
+**/node_modules/
+**/dist/
+coverage/
+.env
+.env.local
+*.log
+**/test/.infra.json
+.DS_Store
+
+# History generator scripts & temp backup
+generate-history.js
+commit-history.js
+_backup_clean/
+
