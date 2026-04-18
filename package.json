@@ -1,0 +1,10 @@
+{
+  "name": "realtime-notification",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Realtime notification service: backend (Fastify + Postgres + Redis) and frontend (React + GSAP)",
+  "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev"
+  }
+}
