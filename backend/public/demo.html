@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Realtime Notifications — Demo</title>
+    <link rel="stylesheet" href="demo.css" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>Realtime Notifications</h1>
+        <p class="subtitle">
+          Postgres is the source of truth. Redis Pub/Sub is only a fast, lossy hint.
+        </p>
+      </div>
+      <div class="instance">
+        <span class="label">served by</span>
+        <span id="instanceId" class="badge">–</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>Connect</h2>
+        <div class="row">
+          <input id="userId" type="text" value="user-42" autocomplete="off" placeholder="user id" />
+          <button id="connectBtn" class="primary">Connect</button>
+          <button id="disconnectBtn" class="ghost" disabled>Disconnect</button>
+        </div>
+        <p class="hint">
+          Open this page in two tabs as the same user and send a notification. Both update
+          instantly — even if nginx routed them to different API instances.
+        </p>
+        <p id="status" class="status">disconnected</p>
+      </section>
+
+      <section class="card">
+        <h2>Unread <span id="unreadBadge" class="unread">0</span></h2>
+        <div class="row">
+          <button id="readAllBtn" class="ghost" disabled>Mark all read</button>
+          <button id="refreshBtn" class="ghost" disabled>Reload history</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Send a test notification</h2>
+        <form id="sendForm" class="stack">
+          <input id="title" type="text" value="Invoice paid" maxlength="200" placeholder="title" />
+          <textarea id="body" rows="2" maxlength="2000" placeholder="body (optional)"></textarea>
+          <button class="primary" type="submit" disabled id="sendBtn">Send to this user</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Inbox</h2>
+        <ul id="items" class="items"></ul>
+        <p id="empty" class="empty">Nothing yet.</p>
+      </section>
+    </main>
+
+    <script src="demo.js"></script>
+  </body>
+</html>
