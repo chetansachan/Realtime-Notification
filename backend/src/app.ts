@@ -1,4 +1,3 @@
-// [initial module draft]
 import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 import Fastify, { type FastifyServerOptions } from 'fastify';
