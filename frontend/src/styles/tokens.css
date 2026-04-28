@@ -1,0 +1,132 @@
+// [initial module draft]
+@import 'tailwindcss';
+
+/*
+ * Design Notification Service — Design Tokens
+ * Implementation-ready, token-driven UI guidance
+ * Reference: https://algomaster.io/learn/system-design-interviews/design-notification-service
+ */
+@theme {
+  --font-sans:
+    'Inter', 'Inter Fallback', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Color Palette Tokens */
+  --color-text-primary: #f2f2f2;
+  --color-text-secondary: #a1a1aa;
+  --color-surface-base: #000000;
+  --color-surface-muted: #22c55e;
+  --color-surface-raised: #0c0a09;
+  --color-border-default: #27272a;
+
+  /* Semantic UI aliases */
+  --color-page: #000000;
+  --color-inverse: #f2f2f2;
+  --color-surface-soft: #121214;
+  --color-surface-card: #0c0a09;
+  --color-accent: #22c55e;
+  --color-accent-soft: rgba(34, 197, 94, 0.12);
+  --color-fg: #f2f2f2;
+  --color-fg-subtle: #a1a1aa;
+  --color-fg-inverse: #000000;
+  --color-fg-subtle-inverse: #52525b;
+  --color-border: #27272a;
+  --color-border-soft: #27272a;
+
+  /* Feedback colors (WCAG 2.2 AA compliant contrast on dark surfaces) */
+  --color-success: #22c55e;
+  --color-warning: #eab308;
+  --color-danger: #ef4444;
+  --color-live: #22c55e;
+
+  /* Radii Tokens */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 9999px;
+  --radius-panel: 8px;
+  --radius-card: 8px;
+  --radius-pill: 9999px;
+
+  /* Motion Durations */
+  --duration-instant: 150ms;
+  --duration-fast: 200ms;
+  --duration-normal: 300ms;
+  --duration-slow: 1000ms;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* Semantic token references */
+  --color-text-primary: #f2f2f2;
+  --color-text-secondary: #a1a1aa;
+  --color-surface-base: #000000;
+  --color-surface-muted: #22c55e;
+  --color-surface-raised: #0c0a09;
+  --color-border-default: #27272a;
+
+  --color-page: #000000;
+  --color-surface-card: #0c0a09;
+  --color-fg: #f2f2f2;
+  --color-fg-subtle: #a1a1aa;
+  --color-accent: #22c55e;
+  --color-accent-soft: rgba(34, 197, 94, 0.14);
+  --color-border: #27272a;
+  --color-border-soft: #27272a;
+
+  /* Font styles */
+  --font-family-primary: 'Inter', 'Inter Fallback', system-ui, sans-serif;
+  --font-size-base: 18px;
+  --font-weight-base: 400;
+  --font-line-height-base: 31.5px;
+
+  /* Typography scale */
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 17px;
+  --font-size-2xl: 18px;
+  --font-size-3xl: 20px;
+  --font-size-4xl: 24px;
+
+  /* Spacing scale */
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 8px;
+  --space-5: 10px;
+  --space-6: 12px;
+  --space-7: 16px;
+  --space-8: 20px;
+  --space-9: 24px;
+  --space-10: 32px;
+  --space-11: 48px;
+  --space-12: 64px;
+
+  /* Radii tokens */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 9999px;
+  --radius-card: 8px;
+  --radius-panel: 8px;
+  --radius-pill: 9999px;
+
+  /* Motion tokens */
+  --motion-duration-instant: 150ms;
+  --motion-duration-fast: 200ms;
+  --motion-duration-normal: 300ms;
+  --motion-duration-slow: 1000ms;
+
+  /* Focus visible accessibility ring */
+  --focus-ring: 2px solid #22c55e;
+  --focus-offset: 2px;
+}
+
+[data-surface='dark'] {
+  color-scheme: dark;
+  --focus-ring: 2px solid #22c55e;
+}
