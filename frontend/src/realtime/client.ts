@@ -1,4 +1,3 @@
-// [initial module draft]
 import { fetchEventSource, type EventSourceMessage } from '@microsoft/fetch-event-source';
 import { backoffDelay } from './backoff.js';
 import { parseStreamEvent, type StreamEvent } from './events.js';
