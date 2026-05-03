@@ -1,4 +1,3 @@
-// [initial module draft]
 import clsx from 'clsx';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
