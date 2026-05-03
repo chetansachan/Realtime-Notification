@@ -1,4 +1,3 @@
-// [initial module draft]
 import { useLayoutEffect, useRef, useState } from 'react';
 import * as Tabs from '@radix-ui/react-tabs';
 import { useInbox, useMarkAllRead, useMarkRead } from '../features/inbox/queries.js';
