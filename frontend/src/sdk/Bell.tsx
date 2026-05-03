@@ -1,4 +1,3 @@
-// [initial module draft]
 import { useEffect, useRef, useState } from 'react';
 import * as Popover from '@radix-ui/react-popover';
 import { BellIcon } from '../components/icons.js';
