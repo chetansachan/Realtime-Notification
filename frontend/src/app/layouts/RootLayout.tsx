@@ -1,4 +1,3 @@
-// [initial module draft]
 import { useEffect, useRef } from 'react';
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import { AnnouncerHost } from '../../lib/a11y/announcer.js';
