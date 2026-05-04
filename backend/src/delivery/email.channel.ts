@@ -1,4 +1,3 @@
-// [initial module draft]
 import nodemailer, { type Transporter } from 'nodemailer';
 import type { AppLogger } from '../shared/logger.js';
 
