@@ -1,4 +1,3 @@
-// [initial module draft]
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 import type { LookupFunction } from 'node:net';
