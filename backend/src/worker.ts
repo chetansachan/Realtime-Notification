@@ -1,4 +1,3 @@
-// [initial module draft]
 import { createServer } from 'node:http';
 import { Worker, type Job } from 'bullmq';
 import pino from 'pino';
