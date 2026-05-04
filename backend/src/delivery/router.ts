@@ -1,4 +1,3 @@
-// [initial module draft]
 import type { DbExecutor, DeliveryChannel } from '../db/types.js';
 import { getCategory, getPreference } from '../modules/preferences/preferences.repository.js';
 
