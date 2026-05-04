@@ -1,4 +1,3 @@
-// [initial module draft]
 import type { AppServer } from '../../types/app.js';
 import { sql } from 'kysely';
 import { notFound } from '../../shared/errors.js';
