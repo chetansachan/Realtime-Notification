@@ -1,4 +1,3 @@
-// [initial module draft]
 import { Kysely, PostgresDialect } from 'kysely';
 import { Pool, types as pgTypes } from 'pg';
 import type { DB } from './types.js';
