@@ -1,4 +1,3 @@
-// [initial module draft]
 import { hostname } from 'node:os';
 import { envSchema } from 'env-schema';
 import { Type, type Static } from '@sinclair/typebox';
