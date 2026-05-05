@@ -1,4 +1,3 @@
-// [initial module draft]
 export type ErrorCode =
   | 'bad_request'
   | 'validation_failed'
