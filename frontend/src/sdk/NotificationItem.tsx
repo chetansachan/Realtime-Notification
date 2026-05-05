@@ -1,4 +1,3 @@
-// [initial module draft]
 import { useId } from 'react';
 import type { NotificationItem as NotificationModel } from '../lib/types.js';
 import { formatAbsolute, formatRelative, safeUrl } from '../lib/format.js';
