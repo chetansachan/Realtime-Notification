@@ -1,4 +1,3 @@
-// [initial module draft]
 import { create } from 'zustand';
 
 export type StreamStatus =
