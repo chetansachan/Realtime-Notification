@@ -1,4 +1,3 @@
-// [initial module draft]
 import type { DeliveryChannel } from '../db/types.js';
 import { planDelivery } from '../delivery/router.js';
 import { toNotificationPayload } from '../modules/notify/notify.mapper.js';
