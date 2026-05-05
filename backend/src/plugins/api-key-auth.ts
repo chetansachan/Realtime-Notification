@@ -1,4 +1,3 @@
-// [initial module draft]
 import fp from 'fastify-plugin';
 import type { FastifyInstance, FastifyReply, FastifyRequest, preHandlerHookHandler } from 'fastify';
 import { findApiClientByPrefix, touchApiClient } from '../modules/api-keys/api-keys.repository.js';
