@@ -1,4 +1,3 @@
-// [initial module draft]
 import { Redis } from 'ioredis';
 
 export function createRedis(
