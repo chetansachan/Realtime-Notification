@@ -78,3 +78,73 @@ accessibility decisions. `VITE_API_BASE` can point the SPA at another API; by de
 `DEMO_ENABLED=true` also serves the legacy demo page at <http://localhost:3000/demo>.
 
 ---
+
+## Architecture
+
+```
+ Host apps (billing, chat, ...)                 Browsers / devices
+        │  POST /v1/notify  (API key)                  ▲  SSE / WebSocket
+        ▼                                              │
+ ┌──────────────── nginx / load balancer ─────────────────┐
+ │                                                        │
+ ▼                                                        ▼
+API instance A                                    API instance B
+ ├─ notify module ──► PostgreSQL (commit)           ├─ ConnectionRegistry
+ ├─ PUBLISH ntf:app:user ──► Redis Pub/Sub ──────►  ├─ PubSubBridge (SUBSCRIBE)
+ └─ enqueue email/webhook ──► BullMQ (Redis)        └─ SseConnection → browser tab
+                                    │
+                              Worker process(es) → SMTP / webhook endpoints
+```
+
+### Ingest flow (`POST /v1/notify`)
+
+```
+auth (API key + scope) → rate limit → TypeBox validation
+→ service: resolve recipients → check preferences
+→ transaction:
+    insert notification (ON CONFLICT idempotency key)
+    for each recipient (sorted, stable lock order):
+      plan channels → allocate per-user seq → insert deliveries
+→ COMMIT
+→ PUBLISH to Redis → enqueue email/webhook/escalation jobs
+→ 201 (200 if idempotent duplicate, 202 for a large fan-out)
+```
+
+### Why the per-user sequence exists
+
+A global `bigserial` has a subtle replay bug: transaction A takes id 10, transaction B takes 11, B
+commits first, the client sees 11, disconnects, reconnects with `Last-Event-ID: 11` — and row 10
+commits later and is never replayed.
+
+Allocating the number from a per-user counter row inside the same transaction fixes it:
+
+```sql
+INSERT INTO user_streams (app_id, user_id, last_seq, unread_count)
+VALUES ($1, $2, 1, 1)
+ON CONFLICT (app_id, user_id)
+DO UPDATE SET last_seq = user_streams.last_seq + 1,
+              unread_count = user_streams.unread_count + 1
+RETURNING last_seq;
+```
+
+The row lock serialises concurrent notifications for one user until commit, so **sequence order
+equals commit order**, and a rollback rolls back the increment (no gaps). Muted notifications get
+`status = 'suppressed'` and `seq = NULL`, so they never create visible gaps either.
+
+### The three-phase replay handoff
+
+`registry.attach(conn, replay)` closes the race between "events I am replaying from the DB" and
+"live events arriving from Redis right now":
+
+1. Register the connection in **buffering** mode and await the Redis `SUBSCRIBE` acknowledgement.
+   From here on, live events for this user are captured per connection.
+2. **Replay from Postgres** (`WHERE seq > $lastEventId ORDER BY seq LIMIT n`).
+3. **Drain the buffer**, dropping anything with `seq <= lastSentSeq`, then switch to live mode.
+
+The order matters. Querying the DB before subscribing would lose anything committed in between.
+If the backlog exceeds `REPLAY_LIMIT`, the server sends `event: resync` instead and the client
+refetches over REST, so a reconnect can never produce an unbounded burst.
+
+### Stream events
+
+| Event | Has `id:`? | Purpose |
