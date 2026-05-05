@@ -1,4 +1,3 @@
-// [initial module draft]
 export type DeliveryChannel = 'in_app' | 'email' | 'webhook';
 
 export interface NotificationItem {
