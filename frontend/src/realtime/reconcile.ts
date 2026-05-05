@@ -1,4 +1,3 @@
-// [initial module draft]
 export type SeqDecision =
   | { kind: 'apply' }
   | { kind: 'duplicate' }
