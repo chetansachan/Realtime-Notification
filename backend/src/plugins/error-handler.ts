@@ -1,4 +1,3 @@
-// [initial module draft]
 import fp from 'fastify-plugin';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { AppError, fromPgError, isPgError } from '../shared/errors.js';
