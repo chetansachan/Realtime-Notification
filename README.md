@@ -148,3 +148,73 @@ refetches over REST, so a reconnect can never produce an unbounded burst.
 ### Stream events
 
 | Event | Has `id:`? | Purpose |
+|---|---|---|
+| `notification` | yes (`seq`) | A new notification |
+| `read` / `read_all` | no | Another tab marked something read; badge stays in sync |
+| `unread_count` | no | Authoritative badge value |
+| `resync` | no | "You missed too much, refetch via REST" |
+| `reconnect` | no | Server is shutting down; reconnect after `retryAfterMs` |
+| `hello` | no | `instanceId`, server `lastSeq`, `unreadCount`, client `resumeFrom` |
+| `: ping` | no | Heartbeat comment every 20 s |
+
+Events without an `id:` never move the browser's stored last event ID, so the replay cursor only
+advances on real notifications.
+
+### Backpressure and cleanup
+
+- Each connection has a bounded outbound queue (count and bytes) plus the kernel's own buffer.
+- `res.write()` returning `false` means "slow down": further events are queued and flushed on
+  `drain`. Queue overflow closes **that** connection with a final `resync` hint — safe precisely
+  because replay exists.
+- One shared heartbeat timer sweeps every connection (not one timer per connection) and closes
+  sockets that stopped answering.
+- `registry.detach` removes the connection, and the last local connection for a user issues
+  `UNSUBSCRIBE` (refcounted), so instances only receive traffic for users they can serve.
+- On `app.close()` every stream receives `event: reconnect` with jitter, then ends, so a rolling
+  deploy is invisible to users.
+
+---
+
+## API surface (v1)
+
+```
+# Service API (API key: Authorization: Bearer ntf_live_<prefix>_<secret>)
+POST   /v1/notify                     # Idempotency-Key header supported
+GET    /v1/notifications/:id          # delivery status per recipient/channel (admin view)
+POST   /v1/groups                     # create
+GET    /v1/groups                     # list + member counts
+GET    /v1/groups/:id                 # one group
+PUT    /v1/groups/:id/members         # add/remove members
+DELETE /v1/groups/:id
+POST   /v1/subscriber-tokens          # mint a short-lived JWT for a browser/device
+POST   /v1/stream-tickets             # single-use SSE/WS ticket (API key or subscriber JWT)
+CRUD   /v1/webhook-endpoints
+POST   /v1/api-keys                   # admin: mint another key (shown once)
+GET    /v1/api-keys
+DELETE /v1/api-keys/:id               # revoke
+
+# Subscriber API (subscriber JWT, or a stream ticket for /v1/stream and /v1/ws)
+GET    /v1/stream                     # SSE, honors Last-Event-ID and ?lastEventId=
+GET    /v1/ws                         # WebSocket, {type:"resume",lastSeq}
+GET    /v1/notifications              # keyset-paginated history
+GET    /v1/notifications/unread-count
+POST   /v1/notifications/:id/ack
+POST   /v1/notifications/:id/read
+POST   /v1/notifications/read-all
+GET|PUT /v1/preferences
+GET    /v1/categories                 # category defaults + mandatory flag
+
+# Ops
+GET /health   GET /ready   GET /metrics   GET /docs   GET /demo
+```
+
+Errors are RFC 7807-shaped: `{ type, title, status, detail, code, requestId }`, with Postgres
+`23505 → 409`, `23503 → 422`, `23514 → 409`.
+
+### Authentication
+
+| Caller | Credential | Used for |
+|---|---|---|
+| Host app backend | API key (`ntf_live_<prefix>_<secret>`) | ingest, groups, token minting, webhooks |
+| Browser / device | short-lived JWT (`appId`, `sub`) | stream, inbox, preferences |
+
