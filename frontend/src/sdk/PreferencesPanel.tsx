@@ -1,4 +1,3 @@
-// [initial module draft]
 import { useMemo } from 'react';
 import * as Switch from '@radix-ui/react-switch';
 import { useCategories, usePreferences, useUpdatePreferences } from '../features/preferences/queries.js';
