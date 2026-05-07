@@ -1,4 +1,3 @@
-// [initial module draft]
 import type { InfiniteData } from '@tanstack/react-query';
 import type { InboxPage, NotificationItem } from '../../lib/types.js';
 
