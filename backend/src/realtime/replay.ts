@@ -1,4 +1,3 @@
-// [initial module draft]
 import type { Kysely } from 'kysely';
 import type { DB, DbExecutor } from '../db/types.js';
 import type { Connection } from './connection.js';
