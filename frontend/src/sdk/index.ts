@@ -1,4 +1,3 @@
-// [initial module draft]
 export { NotificationProvider, useNotifications } from './NotificationProvider.js';
 export { Bell } from './Bell.js';
 export { InboxPanel } from './InboxPanel.js';
