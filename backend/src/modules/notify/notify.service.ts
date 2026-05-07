@@ -1,4 +1,3 @@
-// [initial module draft]
 import type { AppServer } from '../../types/app.js';
 import type { DbExecutor, DeliveryChannel } from '../../db/types.js';
 import { planDelivery } from '../../delivery/router.js';
