@@ -1,4 +1,3 @@
-// [initial module draft]
 import { useRef, useState } from 'react';
 import { gsap, useGSAP } from '../../motion/gsap.js';
 import { useReducedMotion } from '../../motion/useReducedMotion.js';
