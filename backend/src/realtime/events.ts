@@ -1,4 +1,3 @@
-// [initial module draft]
 import type { NotificationDto } from '../shared/schemas.js';
 
 export type NotificationPayload = NotificationDto;
