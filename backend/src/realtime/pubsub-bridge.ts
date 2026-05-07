@@ -1,4 +1,3 @@
-// [initial module draft]
 import type { AppLogger } from '../shared/logger.js';
 import type { Redis } from 'ioredis';
 import { parseUserChannel } from '../shared/redis-keys.js';
