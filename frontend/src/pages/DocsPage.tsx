@@ -1,4 +1,3 @@
-// [initial module draft]
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useReveal } from '../motion/useReveal.js';
