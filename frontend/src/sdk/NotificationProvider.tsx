@@ -1,4 +1,3 @@
-// [initial module draft]
 import {
   createContext,
   useContext,
