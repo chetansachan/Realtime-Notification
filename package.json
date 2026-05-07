@@ -5,6 +5,13 @@
   "description": "Realtime notification service: backend (Fastify + Postgres + Redis) and frontend (React + GSAP)",
   "scripts": {
     "dev:backend": "cd backend && npm run dev",
-    "dev:frontend": "cd frontend && npm run dev"
+    "dev:worker": "cd backend && npm run worker",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "cd backend && npm run build && cd ../frontend && npm run build",
+    "test": "cd backend && npm test && cd ../frontend && npm test",
+    "typecheck": "cd backend && npm run typecheck && cd ../frontend && npm run typecheck",
+    "migrate": "cd backend && npm run migrate",
+    "seed:key": "cd backend && npm run seed:key",
+    "up": "docker compose up --build"
   }
 }
