@@ -1,4 +1,3 @@
-// [initial module draft]
 import { useEffect, useState } from 'react';
 import { useToastStore, type Toast } from './toast-store.js';
 import { XIcon } from '../components/icons.js';
