@@ -1,4 +1,3 @@
-// [initial module draft]
 import { Queue, type JobsOptions } from 'bullmq';
 import type { RedisOptions } from 'ioredis';
 import type { DeliveryChannel } from '../db/types.js';
