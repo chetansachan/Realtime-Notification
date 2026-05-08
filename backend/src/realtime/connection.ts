@@ -1,4 +1,3 @@
-// [initial module draft]
 import type { AppLogger } from '../shared/logger.js';
 import type { ServerResponse } from 'node:http';
 import type { WebSocket } from 'ws';
