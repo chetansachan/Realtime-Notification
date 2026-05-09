@@ -218,3 +218,151 @@ Errors are RFC 7807-shaped: `{ type, title, status, detail, code, requestId }`, 
 | Host app backend | API key (`ntf_live_<prefix>_<secret>`) | ingest, groups, token minting, webhooks |
 | Browser / device | short-lived JWT (`appId`, `sub`) | stream, inbox, preferences |
 
+Only a key's prefix and SHA-256 hash are stored (keys are high-entropy, so no password stretching
+is needed); lookup is by prefix, comparison is `timingSafeEqual`, and results are cached for 30 s.
+`EventSource` cannot send headers, so streams authenticate with a **single-use ticket** consumed
+atomically with `GETDEL`, or with a subscriber JWT for the WebSocket/non-native clients.
+Tickets and tokens are redacted from logs.
+
+---
+
+## Testing
+
+```bash
+npm test          # backend first (Testcontainers), then frontend (Vitest + jsdom)
+```
+
+The backend suite uses **real infrastructure** via Testcontainers (`postgres:16-alpine`,
+`redis:7-alpine`) and real clients (`eventsource`, `ws`), because mocks cannot prove cross-instance
+delivery. Docker must be running.
+
+Coverage highlights:
+
+- **Cross-instance delivery** — client on B, notify on A, event arrives on B.
+- **Replay** — receive 1–3, disconnect, write 4–6, reconnect with `Last-Event-ID: 3`, get 4, 5, 6
+  exactly once (both the header and `?lastEventId=` paths are exercised).
+- **Handoff race** — notifications written continuously while the client reconnects repeatedly;
+  final sequence must be gapless and duplicate-free.
+- **Sequence integrity** — 50 parallel notifications to one user yield seq 1–50.
+- **Backpressure** — deterministic fake transport fills the queue, overflow closes the connection.
+- **Cleanup** — registry empties and the Redis `UNSUBSCRIBE` actually happens (verified with
+  `PUBSUB NUMSUB`).
+- **Heartbeat** — fake timers verify the sweep cadence and dead-peer closure.
+- **Auth/tenancy** — scopes, single-use tickets, app A cannot read app B's data.
+- **Idempotency** — same key twice returns the original; different payload returns 409.
+- **Preferences** — muted category is suppressed (no seq, no push, no unread); mandatory categories
+  ignore mute.
+- **Workers** — HMAC-signed webhook delivery, SSRF rejection, escalation skipped when already read,
+  chunked group fan-out that stays idempotent on retry.
+- **Graceful shutdown** — clients receive `reconnect` and `app.close()` resolves.
+
+The replay/backpressure/cleanup tests are the ones worth reading first: they encode the failure
+model that makes Redis-as-a-hint safe.
+
+The frontend suite covers the pieces that make the UI correct under reconnects: sequence
+classification (apply/duplicate/gap), full-jitter backoff, hostile SSE payload parsing, the store,
+the live-region announcer (batching and throttling), toast coalescing, and notification rendering
+(untrusted markup, unsafe URLs). A dependency-free browser check drives Chrome over CDP against the
+real stack:
+
+```bash
+# with the backend and `npm run dev` running
+cd frontend && node scripts/browser-check.mjs
+```
+
+It asserts the stream goes live, a send arrives in the inbox, five offline sends replay on
+reconnect (seq 6, six items, one hello, no duplicates), and the console stays clean.
+
+---
+
+## Project layout
+
+```
+backend/
+  src/
+    app.ts            buildApp(): plugins + modules, used by the server and by tests
+    server.ts         API entrypoint (listen, graceful shutdown)
+    worker.ts         BullMQ workers + metrics, scales independently
+    config/env.ts     TypeBox-validated environment
+    plugins/          db, redis, auth, realtime, security, swagger, metrics, queues
+    modules/          notify, inbox, groups, stream (SSE/WS), tokens, preferences,
+                      webhooks, api-keys, demo
+    realtime/         framework-agnostic heart: connection, registry, pubsub bridge,
+                      replay, heartbeat, events, publish
+    delivery/         channel routing, email, signed webhooks with SSRF guard
+    jobs/             queues and fan-out / email / webhook / escalation / maintenance
+    db/               Kysely types, client factory, plain-SQL migrations
+  public/             legacy demo.html/demo.js/demo.css (DEMO_ENABLED)
+  test/               setup, helpers, unit, integration, realtime
+frontend/
+  src/
+    app/              router + root layout (route focus, skip link)
+    realtime/         StreamClient, sequence tracker, backoff, Zustand store, event bridge
+    sdk/              NotificationProvider, Bell, InboxPanel, NotificationItem,
+                      PreferencesPanel, ConnectionPill, ToastHost
+    features/         inbox + preferences queries, cache updates, mutations
+    pages/            landing, playground, docs
+    motion/           GSAP registration, motion tokens, reveal/count hooks
+    components/       ui primitives, icons, pipeline diagram
+    styles/           tokens.css (the only place raw values live), base.css
+  scripts/            browser-check.mjs (CDP smoke test)
+  docs/               playground screenshot
+```
+
+`backend/src/realtime/` deliberately knows nothing about Fastify: it deals with connections, a
+registry and a bridge, so it can be unit-tested with fake connections. On the frontend,
+`src/realtime/` knows nothing about React components for the same reason.
+
+---
+
+## Design notes and trade-offs
+
+**Redis Pub/Sub, not `LISTEN/NOTIFY`.** `NOTIFY` has an 8 KB payload limit and ties up dedicated
+database connections; Pub/Sub is built for fan-out and Redis is already required for rate limiting
+and queues.
+
+**Refcounted per-user subscriptions, not `PSUBSCRIBE ntf:*`.** A pattern subscription makes every
+instance receive every message and filter locally — fine at small scale, wasteful at large scale.
+The first local connection for a user issues `SUBSCRIBE ntf:{appId}:{userId}`; the last to leave
+issues `UNSUBSCRIBE`. On Redis Cluster, use sharded Pub/Sub (`SSUBSCRIBE`/`SPUBLISH`).
+
+**SSE by default, WebSocket available.** Notifications are one-way; the only upstream traffic is
+occasional ack/read, which plain `POST`s handle. SSE gives reconnect, resume and HTTP/2/proxy
+compatibility for free. WebSocket earns its place for frequent client→server messages, binary data
+or chat-like workloads. Both implement the same `Connection` interface, so registry, replay and
+dispatch are written once.
+
+**Idempotent, monotonic delivery transitions.** `UPDATE ... WHERE read_at IS NULL RETURNING` and
+`WHERE status IN ('queued','sent')` mean a late ack can never move `read` back to `delivered`, and
+a repeated read never decrements the unread counter twice. A nightly reconcile job compares
+`unread_count` with a real `COUNT(*)` and repairs drift.
+
+**Webhook SSRF guard.** Users register these URLs, so they are treated as hostile: https only,
+DNS resolved and every address checked against loopback/RFC1918/link-local/CGNAT/ULA ranges, the
+resolved IP pinned for the request (defeating DNS rebinding), redirects not followed, 5 s timeout,
+response size capped. Repeated failures trip a per-endpoint circuit breaker and disable it.
+
+**Known deviations / not done:** quiet hours for email, monthly partitioning of `deliveries`, and
+sharded Pub/Sub are described in the design but not implemented. Escalation emails are addressed by
+`userId` (treated as an email when it contains `@`, otherwise `userId@notifications.local`) because
+this service has no user directory.
+
+---
+
+## Configuration
+
+All environment variables are validated at startup (see `.env.example`). The important ones:
+
+| Variable | Meaning |
+|---|---|
+| `DATABASE_URL`, `REDIS_URL` | Infrastructure |
+| `JWT_SECRET` | Subscriber token signing key (≥ 32 chars) |
+| `INSTANCE_ID` | Attached to logs and to the `hello` event |
+| `INLINE_RECIPIENT_LIMIT` | Above this, ingest returns 202 and a worker fans out |
+| `REPLAY_LIMIT` | Max events replayed before sending `resync` |
+| `MAX_CONNECTIONS_PER_USER` / `_PER_INSTANCE` | Connection caps |
+| `CONNECTION_QUEUE_MAX` / `_BYTES` | Slow-consumer bounds |
+| `HEARTBEAT_INTERVAL_MS` | Shared heartbeat cadence |
+| `STREAM_TICKET_TTL_SECONDS` | Single-use stream ticket lifetime |
+| `WEBHOOK_ALLOW_PRIVATE_IPS` | Only for local testing; keep false in production |
+| `DEMO_ENABLED` | Serves `/demo` and the demo-only routes |
