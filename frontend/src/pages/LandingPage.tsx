@@ -1,4 +1,3 @@
-// [initial module draft]
 import { useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { gsap, useGSAP } from '../motion/gsap.js';
