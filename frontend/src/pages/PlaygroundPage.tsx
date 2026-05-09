@@ -1,4 +1,3 @@
-// [initial module draft]
 import { useMemo, useState, type FormEvent } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useShallow } from 'zustand/react/shallow';
