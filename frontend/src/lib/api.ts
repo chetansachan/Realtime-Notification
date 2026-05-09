@@ -1,4 +1,3 @@
-// [initial module draft]
 export interface ApiErrorInit {
   status: number;
   code?: string | undefined;
