@@ -1,4 +1,3 @@
-// [initial module draft]
 import { buildApp } from './app.js';
 import { loadConfig } from './config/env.js';
 
